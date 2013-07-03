@@ -18,22 +18,18 @@ open chosen correct = uniform $ otherDoors [chosen, correct]
 posterior :: (Fractional p) => Door -> Door -> T p Door
 posterior chosen opened = fst <$> (prior >>+ open chosen >>=? just opened . snd)
 
-posteriorMax :: Door -> Door -> Door
-posteriorMax = fst . maximumBy (comparing snd) . decons ## posterior
-
-change :: Door -> Door -> Bool
-change chosen = (chosen ==) . posteriorMax chosen
-
---utilities
+--door utilities
 otherDoors :: [Door] -> [Door]
 otherDoors = (\\) [First, Second, Third]
 
-infixr 8 ##
-(##) :: (c -> d) -> (a -> b -> c) -> a -> b -> d
-(##) = (.) . (.)
-
+--distribution utilities
 graph :: (Num p, Ord b, Ord a) => (a -> T p b) -> (a -> T p (a, b))
 graph f x = (x,) <$> f x
 
 (>>+) :: (Num p, Ord b, Ord a) => T p a -> (a -> T p b) -> T p (a, b)
 dist >>+ f = dist >>= graph f
+
+--miscellaneous utilities
+infixr 8 ##
+(##) :: (c -> d) -> (a -> b -> c) -> a -> b -> d
+(##) = (.) . (.)
