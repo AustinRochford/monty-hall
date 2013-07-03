@@ -1,9 +1,11 @@
 {-# LANGUAGE TupleSections #-}
 
-import Prelude hiding (map)
+import Control.Applicative ((<$>))
+
 import Data.List (maximumBy, (\\))
 import Data.Ord (comparing)
-import Numeric.Probability.Distribution (decons, just, map, T, uniform, (>>=?))
+
+import Numeric.Probability.Distribution (decons, just, T, uniform, (>>=?))
 
 data Door = First | Second | Third deriving (Show, Eq, Ord)
 
@@ -13,11 +15,8 @@ prior = uniform [First, Second, Third]
 open :: (Fractional p) => Door -> Door -> T p Door
 open chosen correct = uniform $ otherDoors [chosen, correct]
 
-joint :: (Fractional p) => Door -> Door -> T p (Door, Door)
-joint chosen correct = map (correct,) $ open chosen correct
-
 posterior :: (Fractional p) => Door -> Door -> T p Door
-posterior chosen opened = map fst $ prior >>= joint chosen >>=? just opened . snd
+posterior chosen opened = fst <$> (prior >>+ open chosen >>=? just opened . snd)
 
 posteriorMax :: Door -> Door -> Door
 posteriorMax = fst . maximumBy (comparing snd) . decons ## posterior
@@ -32,3 +31,9 @@ otherDoors = (\\) [First, Second, Third]
 infixr 8 ##
 (##) :: (c -> d) -> (a -> b -> c) -> a -> b -> d
 (##) = (.) . (.)
+
+graph :: (Num p, Ord b, Ord a) => (a -> T p b) -> (a -> T p (a, b))
+graph f x = (x,) <$> f x
+
+(>>+) :: (Num p, Ord b, Ord a) => T p a -> (a -> T p b) -> T p (a, b)
+dist >>+ f = dist >>= graph f
