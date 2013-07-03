@@ -15,8 +15,8 @@ prior = uniform [First, Second, Third]
 open :: (Fractional p) => Door -> Door -> T p Door
 open chosen correct = uniform $ otherDoors [chosen, correct]
 
---posterior :: (Fractional p) => Door -> Door -> T p Door
---posterior chosen opened = fst <$> (prior >>+ open chosen >>=? just opened . snd)
+posterior :: (Fractional p) => Door -> Door -> T p Door
+posterior chosen opened = bayes (just opened) prior $ open chosen
 
 --door utilities
 otherDoors :: [Door] -> [Door]
